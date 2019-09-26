@@ -1,4 +1,4 @@
-import {Component, ElementRef, ViewEncapsulation, ViewChild, Renderer2, ChangeDetectorRef, OnDestroy, HostBinding} from "@angular/core";
+import {Component, ElementRef, ViewEncapsulation, ViewChild, Renderer2, ChangeDetectorRef, OnDestroy, HostBinding, TemplateRef} from "@angular/core";
 import {IMyDate} from "../../interfaces/my-date.interface";
 import {IMyDateRange} from "../../interfaces/my-date-range.interface";
 import {IMyMonth} from "../../interfaces/my-month.interface";
@@ -54,6 +54,9 @@ export class CalendarComponent implements OnDestroy {
   prevViewDisabled: boolean = false;
   nextViewDisabled: boolean = false;
 
+  headerTemplate: TemplateRef<void>;
+  footerTemplate: TemplateRef<void>;
+
   clickListener: () => void;
 
   constructor(private elem: ElementRef, private renderer: Renderer2, private cdr: ChangeDetectorRef, private utilService: UtilService) {
@@ -68,10 +71,12 @@ export class CalendarComponent implements OnDestroy {
     this.clickListener();
   }
 
-  initialize(opts: IMyOptions, defaultMonth: string, selectorPos: IMySelectorPosition, inputValue: string, dc: (dm: IMyDateModel, close: boolean) => void, cvc: (cvc: IMyCalendarViewChanged) => void, rds: (rds: IMyRangeDateSelection) => void, cbe: () => void): void {
+  initialize(opts: IMyOptions, defaultMonth: string, selectorPos: IMySelectorPosition, inputValue: string, headerTemplate: TemplateRef<void>, footerTemplate: TemplateRef<void>, dc: (dm: IMyDateModel, close: boolean) => void, cvc: (cvc: IMyCalendarViewChanged) => void, rds: (rds: IMyRangeDateSelection) => void, cbe: () => void): void {
     this.opts = opts;
     this.selectorPos = selectorPos;
     this.weekDays.length = 0;
+    this.headerTemplate = headerTemplate;
+    this.footerTemplate = footerTemplate;
 
     const {defaultView, dateRange, firstDayOfWeek, dayLabels, stylesData} = this.opts;
 

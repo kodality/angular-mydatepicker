@@ -1,4 +1,4 @@
-import {Directive, Input, ComponentRef, ElementRef, ViewContainerRef, Renderer2, ChangeDetectorRef, ComponentFactoryResolver, forwardRef, EventEmitter, Output, SimpleChanges, OnChanges, HostListener, OnDestroy} from "@angular/core";
+import {Directive, Input, ComponentRef, ElementRef, ViewContainerRef, Renderer2, ChangeDetectorRef, ComponentFactoryResolver, forwardRef, EventEmitter, Output, SimpleChanges, OnChanges, HostListener, OnDestroy, TemplateRef} from "@angular/core";
 import {AbstractControl, ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator} from "@angular/forms";
 import {CalendarComponent} from "./components/calendar/calendar.component";
 import {IMyDate} from "./interfaces/my-date.interface";
@@ -39,6 +39,8 @@ export class AngularMyDatePickerDirective implements OnChanges, OnDestroy, Contr
   @Input() options: IMyOptions;
   @Input() locale: string;
   @Input() defaultMonth: string;
+  @Input() headerTemplate: TemplateRef<void>;
+  @Input() footerTemplate: TemplateRef<void>;
 
   @Output() dateChanged: EventEmitter<IMyDateModel> = new EventEmitter<IMyDateModel>();
   @Output() inputFieldChanged: EventEmitter<IMyInputFieldChanged> = new EventEmitter<IMyInputFieldChanged>();
@@ -308,6 +310,8 @@ export class AngularMyDatePickerDirective implements OnChanges, OnDestroy, Contr
         this.defaultMonth,
         this.getSelectorPosition(this.elem.nativeElement),
         this.elem.nativeElement.value,
+        this.headerTemplate,
+        this.footerTemplate,
         (dm: IMyDateModel, close: boolean) => {
           this.focusToInput();
           this.emitDateChanged(dm);

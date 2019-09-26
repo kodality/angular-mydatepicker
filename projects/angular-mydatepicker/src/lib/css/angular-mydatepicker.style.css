@@ -34,6 +34,12 @@
   border-radius: 4px;
   z-index: 100000;
   animation: selectorfadein 0.06s;
+  display: flex;
+  flex-direction: column;
+}
+
+.myDpSelector lib-day-view {
+  flex: 1;
 }
 
 .myDpSelectorAbsolute {
@@ -128,7 +134,7 @@
 .myDpYearTable {
   table-layout: fixed;
   width: 100%;
-  height: calc(100% - 30px);
+  height: 100%;
   background-color: #FFF;
   font-size: 14px;
 }

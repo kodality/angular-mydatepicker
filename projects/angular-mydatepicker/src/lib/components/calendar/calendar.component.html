@@ -2,6 +2,11 @@
 <div class="ng-mydp {{opts.stylesData.selector}}">
   <div class="myDpSelector" #selectorEl [libAngularMyDatePickerFocus]="1" [ngStyle]="{'width': opts.selectorWidth, 'height' : opts.selectorHeight, 'top': !opts.inline ? selectorPos.top : '0', 'left': !opts.inline ? selectorPos.left : '0'}" [ngClass]="{'myDpSelectorArrow': opts.showSelectorArrow, 'myDpSelectorArrowLeft': opts.showSelectorArrow && !opts.alignSelectorRight, 'myDpSelectorArrowRight': opts.showSelectorArrow&&opts.alignSelectorRight, 'myDpSelectorAbsolute': !opts.inline, 'myDpSelectorPosInitial': opts.inline}" (keyup)="onCloseSelector($event)" tabindex="0">
 
+
+    <ng-container *ngIf="headerTemplate">
+      <ng-template [ngTemplateOutlet]="headerTemplate"></ng-template>
+    </ng-container>
+
     <lib-selection-bar [opts]="opts" [years]="years" [visibleMonth]="visibleMonth" [selectMonth]="selectMonth" [selectYear]="selectYear"
                     [prevViewDisabled]="prevViewDisabled" [nextViewDisabled]="nextViewDisabled"
                     (prevNavigateBtnClicked)="onPrevNavigateBtnClicked()" (nextNavigateBtnClicked)="onNextNavigateBtnClicked()"
@@ -19,6 +24,10 @@
     <lib-year-view *ngIf="selectYear" [opts]="opts" [years]="years"
                     (yearCellClicked)="onYearCellClicked($event)"
                     (yearCellKeyDown)="onYearCellKeyDown($event)"></lib-year-view>
+
+    <ng-container *ngIf="footerTemplate">
+      <ng-template [ngTemplateOutlet]="footerTemplate"></ng-template>
+    </ng-container>
 
   </div>
 </div>
