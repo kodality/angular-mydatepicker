@@ -38,7 +38,9 @@
   flex-direction: column;
 }
 
-.myDpSelector lib-day-view {
+.myDpSelector lib-day-view,
+.myDpSelector lib-month-view,
+.myDpSelector lib-year-view {
   flex: 1;
 }
 
