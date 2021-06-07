@@ -36,7 +36,9 @@ export interface IMyOptions {
   disableWeekdays?: Array<string>;
   enableDates?: Array<IMyDate>;
   markDates?: Array<IMyMarkedDates>;
+  colorDates?: Array<IMyMarkedDates>;
   markWeekends?: IMyMarkedDate;
+  colorWeekends?: IMyMarkedDate;
   alignSelectorRight?: boolean;
   openSelectorTopOfInput?: boolean;
   closeSelectorOnDateSelect?: boolean;

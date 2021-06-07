@@ -206,6 +206,23 @@ export class UtilService {
     return {marked: false, color: EMPTY_STR};
   }
 
+  isColoredDate(date: IMyDate, coloredDates: Array<IMyMarkedDates>, colorWeekends: IMyMarkedDate): string {
+    for (const cd of coloredDates) {
+      for (const d of cd.dates) {
+        if ((d.year === 0 || d.year === date.year) && (d.month === 0 || d.month === date.month) && d.day === date.day) {
+          return cd.color;
+        }
+      }
+    }
+    if (colorWeekends && colorWeekends.marked) {
+      const dayNbr = this.getDayNumber(date);
+      if (dayNbr === 0 || dayNbr === 6) {
+        return colorWeekends.color;
+      }
+    }
+    return EMPTY_STR;
+  }
+
   isHighlightedDate(date: IMyDate, sunHighlight: boolean, satHighlight: boolean, highlightDates: Array<IMyDate>): boolean {
     const dayNbr: number = this.getDayNumber(date);
     if (sunHighlight && dayNbr === 0 || satHighlight && dayNbr === 6) {

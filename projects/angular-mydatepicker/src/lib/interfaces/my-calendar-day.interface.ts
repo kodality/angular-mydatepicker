@@ -7,6 +7,7 @@ export interface IMyCalendarDay {
   currDay: boolean;
   disabled: boolean;
   markedDate: IMyMarkedDate;
+  color: string;
   highlight: boolean;
   range?: boolean;
 }

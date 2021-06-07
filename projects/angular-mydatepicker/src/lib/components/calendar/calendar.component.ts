@@ -557,6 +557,7 @@ export class CalendarComponent implements OnDestroy {
             currDay: this.isCurrDay(j, m, y, cmo, today),
             disabled: this.utilService.isDisabledDate(date, this.opts),
             markedDate: this.utilService.isMarkedDate(date, this.opts.markDates, this.opts.markWeekends),
+            color: this.utilService.isColoredDate(date, this.opts.colorDates, this.opts.colorWeekends),
             highlight: this.utilService.isHighlightedDate(date, this.opts.sunHighlight, this.opts.satHighlight, this.opts.highlightDates)});
         }
 
@@ -570,6 +571,7 @@ export class CalendarComponent implements OnDestroy {
             currDay: this.isCurrDay(dayNbr, m, y, cmo, today),
             disabled: this.utilService.isDisabledDate(date, this.opts),
             markedDate: this.utilService.isMarkedDate(date, this.opts.markDates, this.opts.markWeekends),
+            color: this.utilService.isColoredDate(date, this.opts.colorDates, this.opts.colorWeekends),
             highlight: this.utilService.isHighlightedDate(date, this.opts.sunHighlight, this.opts.satHighlight, this.opts.highlightDates)});
           dayNbr++;
         }
@@ -588,6 +590,7 @@ export class CalendarComponent implements OnDestroy {
             currDay: this.isCurrDay(dayNbr, m, y, cmo, today),
             disabled: this.utilService.isDisabledDate(date, this.opts),
             markedDate: this.utilService.isMarkedDate(date, this.opts.markDates, this.opts.markWeekends),
+            color: this.utilService.isColoredDate(date, this.opts.colorDates, this.opts.colorWeekends),
             highlight: this.utilService.isHighlightedDate(date, this.opts.sunHighlight, this.opts.satHighlight, this.opts.highlightDates)});
           dayNbr++;
         }
