@@ -29,7 +29,7 @@
 }
 
 .myDpSelector {
-  padding: 4px;
+  padding: 0;
   border: 1px solid #CCC;
   background-color: #FFF;
   border-radius: 4px;
@@ -300,7 +300,7 @@
 }
 
 .myDpNoFooter {
-  height: calc(100% - 30px);
+  height: 100%;
 }
 
 .myDpCalTable,
@@ -375,10 +375,12 @@
 
 .myDpMonthYearSelBar {
   display: flex;
-  height: 30px;
+  height: 40px;
   background-color: #fff;
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
+  border-bottom: 1px solid #eee;
+  align-items: center;
 }
 
 .myDpPrevBtn {
