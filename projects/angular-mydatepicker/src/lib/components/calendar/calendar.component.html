@@ -1,30 +1,39 @@
 <span #styleEl></span>
-<div class="ng-mydp {{opts.stylesData.selector}}">
-  <div class="myDpSelector" #selectorEl [libAngularMyDatePickerFocus]="1" [ngStyle]="{'width': opts.selectorWidth, 'height' : opts.selectorHeight, 'top': !opts.inline ? selectorPos.top : '0', 'left': !opts.inline ? selectorPos.left : '0'}" [ngClass]="{'myDpSelectorArrow': opts.showSelectorArrow, 'myDpSelectorArrowLeft': opts.showSelectorArrow && !opts.alignSelectorRight, 'myDpSelectorArrowRight': opts.showSelectorArrow&&opts.alignSelectorRight, 'myDpSelectorAbsolute': !opts.inline, 'myDpSelectorPosInitial': opts.inline}" (keyup)="onCloseSelector($event)" tabindex="0">
-
+<div class="ng-mydp {{opts.stylesData?.selector || ''}}">
+  <div class="myDpSelector" #selectorEl 
+    [libAngularMyDatePickerCalendar]="{inline: opts.inline, selectorWidth: opts.selectorWidth, selectorHeight: opts.selectorHeight, selectorPos: selectorPos}" 
+    [ngClass]="{'myDpSelectorArrow': opts.showSelectorArrow, 'myDpSelectorArrowLeft': opts.showSelectorArrow && !opts.alignSelectorRight, 
+      'myDpSelectorArrowRight': opts.showSelectorArrow&&opts.alignSelectorRight, 'myDpSelectorAbsolute': !opts.inline, 'myDpSelectorPosInitial': opts.inline}" 
+    (keyup)="onCloseSelector($event)" tabindex="0">
 
     <ng-container *ngIf="headerTemplate">
       <ng-template [ngTemplateOutlet]="headerTemplate"></ng-template>
     </ng-container>
 
-    <lib-selection-bar [opts]="opts" [years]="years" [visibleMonth]="visibleMonth" [selectMonth]="selectMonth" [selectYear]="selectYear"
+    <lib-selection-bar [opts]="opts" [yearsDuration]="yearsDuration" [visibleMonth]="visibleMonth" [selectMonth]="selectMonth" [selectYear]="selectYear"
                     [prevViewDisabled]="prevViewDisabled" [nextViewDisabled]="nextViewDisabled"
                     (prevNavigateBtnClicked)="onPrevNavigateBtnClicked()" (nextNavigateBtnClicked)="onNextNavigateBtnClicked()"
                     (monthViewBtnClicked)="onMonthViewBtnClicked()" (yearViewBtnClicked)="onYearViewBtnClicked()"></lib-selection-bar>
 
     <lib-day-view *ngIf="!selectMonth && !selectYear" [opts]="opts" [dates]="dates" [weekDays]="weekDays"
-                    [selectedDate]="selectedDate" [selectedDateRange]="selectedDateRange"
+                    [selectedDate]="selectedDate" [selectedDateRange]="selectedDateRange" [viewChanged]="viewChanged"
                     (dayCellClicked)="onDayCellClicked($event)"
-                    (dayCellKeyDown)="onDayCellKeyDown($event)"></lib-day-view>
+                    (dayCellKeyDown)="onDayCellKeyDown($event)"
+                    (viewActivated)="onViewActivated($event)"></lib-day-view>
 
-    <lib-month-view *ngIf="selectMonth" [opts]="opts" [months]="months"
+    <lib-month-view *ngIf="selectMonth" [opts]="opts" [months]="months" [viewChanged]="viewChanged"
                     (monthCellClicked)="onMonthCellClicked($event)"
-                    (monthCellKeyDown)="onMonthCellKeyDown($event)"></lib-month-view>
+                    (monthCellKeyDown)="onMonthCellKeyDown($event)"
+                    (viewActivated)="onViewActivated($event)"></lib-month-view>
 
-    <lib-year-view *ngIf="selectYear" [opts]="opts" [years]="years"
+    <lib-year-view *ngIf="selectYear" [opts]="opts" [years]="years" [viewChanged]="viewChanged"
                     (yearCellClicked)="onYearCellClicked($event)"
-                    (yearCellKeyDown)="onYearCellKeyDown($event)"></lib-year-view>
+                    (yearCellKeyDown)="onYearCellKeyDown($event)"
+                    (viewActivated)="onViewActivated($event)"></lib-year-view>
 
+    <lib-footer-bar *ngIf="opts.showFooterToday" [opts]="opts"
+                    (footerBarTxtClicked)="onTodayFooterClicked()"></lib-footer-bar>
+  
     <ng-container *ngIf="footerTemplate">
       <ng-template [ngTemplateOutlet]="footerTemplate"></ng-template>
     </ng-container>

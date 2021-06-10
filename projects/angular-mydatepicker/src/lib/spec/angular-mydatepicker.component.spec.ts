@@ -8,6 +8,8 @@ import {AngularMyDatePickerDirective} from '../angular-mydatepicker.input';
 import {IAngularMyDpOptions, IMyOptions} from '../interfaces/my-options.interface';
 import {IMyDateModel} from '../interfaces/my-date-model.interface';
 import {DefaultView} from '../enums/default-view.enum';
+import {HeaderAction} from '../enums/header-action.enum';
+import {CalAnimation} from '../enums/cal-animation.enum';
 
 let comp: AngularMyDatepickerTestComponent;
 let fixture: ComponentFixture<AngularMyDatepickerTestComponent>;
@@ -20,6 +22,11 @@ function getElement(id: string): any {
 
 function getElements(id: string): any {
   return document.body.querySelectorAll(id);
+}
+
+function getTodayDate(): string {
+  let today = new Date();
+  return today.getDate() + "." + (today.getMonth() + 1) + "." + today.getFullYear();
 }
 
 @Component({
@@ -48,6 +55,10 @@ class AngularMyDatepickerTestComponent {
     this.vcDp.clearDate();
   }
 
+  headerAction(headerAction: HeaderAction): void {
+    this.vcDp.headerAction(headerAction);
+  }
+
   parseOptions(opts: IMyOptions): void {
     this.vcDp.parseOptions(opts);
   }
@@ -57,8 +68,8 @@ class AngularMyDatepickerTestComponent {
     this.vcDp.setLocaleOptions();
   }
 
-  setDefaultMonth(defMonth: string): void {
-    this.vcDp.defaultMonth = defMonth;
+  setDefaultMonth(defMonth: any): void {
+    this.vcDp.defaultMonth = {defMonth: defMonth, overrideSelection: false};
   }
 
   setInputType(type: string): void {
@@ -159,7 +170,8 @@ describe('AngularMyDatePickerComponent', () => {
   it('validate date selection on calendar',() => {
     let opts: IMyOptions = {
       dateRange: false,
-      dateFormat: 'dd.mm.yyyy'
+      dateFormat: 'dd.mm.yyyy',
+      showMonthNumber: false
     };
 
     comp.parseOptions(opts);
@@ -214,7 +226,8 @@ describe('AngularMyDatePickerComponent', () => {
   it('validate date range selection on calendar',() => {
     let opts: IMyOptions = {
       dateRange: true,
-      dateFormat: 'dd.mm.yyyy'
+      dateFormat: 'dd.mm.yyyy',
+      showMonthNumber: false
     };
 
     comp.parseOptions(opts);
@@ -293,6 +306,116 @@ describe('AngularMyDatePickerComponent', () => {
     fixture.detectChanges();
     selector = getElement('.myDpSelector');
     expect(selector).toBe(null);
+  });
+
+  it('test clearDate function', () => {
+    let opts: IMyOptions = {
+      dateRange: false,
+      dateFormat: 'dd.mm.yyyy'
+    };
+
+    comp.parseOptions(opts);
+    comp.setDefaultMonth('2020/06');
+    comp.openCalendar();
+
+    fixture.detectChanges();
+    let selector = getElement('.myDpSelector');
+    expect(selector).not.toBe(null);
+
+    fixture.detectChanges();
+    let dateCell = getElement('.d_0_0');
+    expect(dateCell).not.toBe(null);
+
+    dateCell.click();
+
+    fixture.detectChanges();
+    let selection = getElement('.myDateInput');
+    expect(selection.value).toBe('01.06.2020');
+
+    comp.clearDate();
+
+    fixture.detectChanges();
+    selection = getElement('.myDateInput');
+    expect(selection.value).toBe('');
+
+    comp.closeCalendar();
+  });
+
+  it('test headerAction function', () => {
+    comp.setDefaultMonth('2020/06');
+    comp.openCalendar();
+    fixture.detectChanges();
+    let selector = getElement('.myDpSelector');
+    expect(selector).not.toBe(null);
+
+    fixture.detectChanges();
+    let monthlabel = getElement('.myDpMonthYearText .myDpMonthBtn');
+    expect(monthlabel).not.toBe(null);
+    expect(monthlabel.textContent).toBe('Jun');
+
+    let yearlabel = getElement('.myDpMonthYearText .myDpYearBtn');
+    expect(yearlabel).not.toBe(null);
+    expect(yearlabel.textContent).toBe('2020');
+
+    fixture.detectChanges();
+    comp.headerAction(HeaderAction.PrevBtnClick);
+
+    fixture.detectChanges();
+    monthlabel = getElement('.myDpMonthYearText .myDpMonthBtn');
+    expect(monthlabel).not.toBe(null);
+    expect(monthlabel.textContent).toBe('May');
+
+    comp.closeCalendar();
+    comp.openCalendar();
+
+    fixture.detectChanges();
+    comp.headerAction(HeaderAction.NextBtnClick);
+
+    fixture.detectChanges();
+    monthlabel = getElement('.myDpMonthYearText .myDpMonthBtn');
+    expect(monthlabel).not.toBe(null);
+    expect(monthlabel.textContent).toBe('Jul');
+
+    comp.closeCalendar();
+    comp.openCalendar();
+
+    fixture.detectChanges();
+    let dateCell = getElement('.d_0_0');
+    expect(dateCell).not.toBe(null);
+
+    fixture.detectChanges();
+    comp.headerAction(HeaderAction.MonthBtnClick);
+
+    fixture.detectChanges();
+    let monthCell = getElement('.m_0_0');
+    expect(monthCell).not.toBe(null);
+
+    fixture.detectChanges();
+    comp.headerAction(HeaderAction.YearBtnClick);
+
+    fixture.detectChanges();
+    let yearCell = getElement('.y_0_0');
+    expect(yearCell).not.toBe(null);
+
+    comp.closeCalendar();
+  });
+
+  it('test document click', () => {
+    comp.setDefaultMonth('2020/06');
+    comp.openCalendar();
+
+    fixture.detectChanges();
+    let selector = getElement('.myDpSelector');
+    expect(selector).not.toBe(null);
+
+    fixture.detectChanges();
+    document.dispatchEvent(new Event('click'));
+
+    setTimeout(() => {
+      fixture.detectChanges();
+      selector = getElement('.myDpSelector');
+      expect(selector).toBe(null);
+    }, 1000)
   });
 
   it('select and clear date', () => {
@@ -759,7 +882,7 @@ describe('AngularMyDatePickerComponent', () => {
     fixture.detectChanges();
     daycell = getElement('.d_0_1');
     expect(daycell).not.toBe(null);
-    expect(window.getComputedStyle(daycell).backgroundColor).toBe('rgb(246, 246, 246)');
+    expect(window.getComputedStyle(daycell).backgroundColor).toBe('rgb(255, 255, 255)');
 
     fixture.detectChanges();
     daycell = getElement('.d_0_2');
@@ -784,7 +907,7 @@ describe('AngularMyDatePickerComponent', () => {
     fixture.detectChanges();
     daycell = getElement('.d_0_1');
     expect(daycell).not.toBe(null);
-    expect(window.getComputedStyle(daycell).backgroundColor).toBe('rgb(246, 246, 246)');
+    expect(window.getComputedStyle(daycell).backgroundColor).toBe('rgb(255, 255, 255)');
 
     comp.closeCalendar();
   });
@@ -1266,7 +1389,8 @@ describe('AngularMyDatePickerComponent', () => {
     comp.setDefaultMonth('2019/05');
 
     let opts: IMyOptions = {
-      monthSelector: true
+      monthSelector: true,
+      showMonthNumber: false
     };
 
     comp.parseOptions(opts);
@@ -1764,7 +1888,7 @@ describe('AngularMyDatePickerComponent', () => {
     let markdate = getElements('.myDpMarkDate');
     expect(markdate).not.toBe(null);
     expect(markdate.length).toBe(2);
-    expect(markdate[0].style['background-color']).toBe('red');
+    expect(markdate[0].style['border-top']).toBe('8px solid red');
 
     comp.closeCalendar();
 
@@ -1794,7 +1918,7 @@ describe('AngularMyDatePickerComponent', () => {
     let markdate = getElements('.myDpMarkDate');
     expect(markdate).not.toBe(null);
     expect(markdate.length).toBe(12);
-    expect(markdate[0].style['background-color']).toBe('blue');
+    expect(markdate[0].style['border-top']).toBe('8px solid blue');
 
     comp.closeCalendar();
 
@@ -2083,6 +2207,376 @@ describe('AngularMyDatePickerComponent', () => {
     fixture.detectChanges();
     let input = getElement('.myDateInput');
     expect(input.value).toBe('29.04.2019 * 30.04.2019');
+  });
+
+  it('options - showMonthNumber', () => {
+    comp.setDefaultMonth('2019/12');
+    let opts: IMyOptions = {
+      dateRange: false,
+      dateFormat: 'dd.mm.yyyy',
+      showMonthNumber: true
+    };
+
+    comp.parseOptions(opts);
+    comp.openCalendar();
+
+    fixture.detectChanges();
+    let selector = getElement('.myDpSelector');
+    expect(selector).not.toBe(null);
+
+    comp.openCalendar();
+    fixture.detectChanges();
+    let monthBtn = getElement('.myDpMonthBtn');
+    expect(monthBtn).not.toBe(null);
+
+    fixture.detectChanges();
+    monthBtn.click();
+
+    fixture.detectChanges();
+    let monthsNbrs = getElements('.myDpMonthNbr');
+    expect(monthsNbrs).not.toBe(null);
+    expect(monthsNbrs.length).toBe(12);
+    expect(monthsNbrs[0].textContent.trim()).toBe('1');
+    expect(monthsNbrs[3].textContent.trim()).toBe('4');
+    expect(monthsNbrs[6].textContent.trim()).toBe('7');
+    expect(monthsNbrs[9].textContent.trim()).toBe('10');
+    expect(monthsNbrs[11].textContent.trim()).toBe('12');
+
+    fixture.detectChanges();
+    let prevMonth = getElement('.myDpIconLeftArrow');
+    expect(prevMonth).not.toBe(null);
+
+    fixture.detectChanges();
+    prevMonth.click();
+
+    fixture.detectChanges();
+    monthsNbrs = getElements('.myDpMonthNbr');
+    expect(monthsNbrs).not.toBe(null);
+    expect(monthsNbrs.length).toBe(12);
+    expect(monthsNbrs[0].textContent.trim()).toBe('1');
+    expect(monthsNbrs[3].textContent.trim()).toBe('4');
+    expect(monthsNbrs[6].textContent.trim()).toBe('7');
+    expect(monthsNbrs[9].textContent.trim()).toBe('10');
+    expect(monthsNbrs[11].textContent.trim()).toBe('12');
+
+    comp.closeCalendar();
+
+    opts.showMonthNumber = false;
+
+    comp.parseOptions(opts);
+    comp.openCalendar();
+
+    fixture.detectChanges();
+    selector = getElement('.myDpSelector');
+    expect(selector).not.toBe(null);
+
+    comp.openCalendar();
+    fixture.detectChanges();
+    monthBtn = getElement('.myDpMonthBtn');
+    expect(monthBtn).not.toBe(null);
+
+    fixture.detectChanges();
+    monthBtn.click();
+
+    fixture.detectChanges();
+    monthsNbrs = getElement('.myDpMonthNbr');
+    expect(monthsNbrs).toBe(null);
+
+    comp.closeCalendar();
+  });
+
+  it('options - showFooterToday and todayTxt', () => {
+    comp.setDefaultMonth('2020/01');
+    let opts: IMyOptions = {
+      dateRange: false,
+      dateFormat: 'd.m.yyyy',
+      todayTxt: "Today 123",
+      showFooterToday: true
+    };
+
+    comp.parseOptions(opts);
+    comp.openCalendar();
+
+    fixture.detectChanges();
+    let selector = getElement('.myDpSelector');
+    expect(selector).not.toBe(null);
+
+    let today = getTodayDate();
+
+    fixture.detectChanges();
+    let footerBtn = getElement('.myDpFooterBtn');
+    expect(footerBtn).not.toBe(null);
+    expect(footerBtn.textContent).toBe("Today 123 " + today);
+
+    fixture.detectChanges();
+    footerBtn.click();
+
+    fixture.detectChanges();
+    let input = getElement('.myDateInput');
+    
+    expect(input.value).toBe(today);
+
+
+    opts.showFooterToday = false;
+    comp.parseOptions(opts);
+    comp.openCalendar();
+
+    fixture.detectChanges();
+    selector = getElement('.myDpSelector');
+    expect(selector).not.toBe(null);
+
+    fixture.detectChanges();
+    footerBtn = getElement('.myDpFooterBtn');
+    expect(footerBtn).toBe(null);
+
+    comp.closeCalendar();
+  });
+
+  it('options - calendarAnimation', () => {
+    comp.setDefaultMonth('2019/11');
+    let opts: IMyOptions = {
+      dateRange: false,
+      dateFormat: 'dd.mm.yyyy',
+      calendarAnimation: {in: CalAnimation.ScaleTop, out: CalAnimation.Rotate}
+    };
+
+    comp.parseOptions(opts);
+    comp.openCalendar();
+
+    fixture.detectChanges();
+    let animationElem = getElement('.myDpAnimationScaleTopIn');
+    expect(animationElem).not.toBe(null);
+
+    fixture.detectChanges();
+    let date = getElement('.d_0_0');
+    expect(date).not.toBe(null);
+
+    fixture.detectChanges();
+    date.click();
+
+    fixture.detectChanges();
+    animationElem = getElement('.myDpAnimationRotateOut');
+    expect(animationElem).not.toBe(null);
+
+    fixture.detectChanges();
+    let input = getElement('.myDateInput');
+    expect(input.value).toBe('28.10.2019');
+  });
+
+  it('options - viewChangeAnimation', () => {
+    comp.setDefaultMonth('2019/11');
+    let opts: IMyOptions = {
+      dateRange: false,
+      dateFormat: 'dd.mm.yyyy',
+      viewChangeAnimation: true
+    };
+
+    comp.parseOptions(opts);
+    comp.openCalendar();
+
+    fixture.detectChanges();
+    let btn = getElement('.myDpMonthBtn');
+    expect(btn).not.toBe(null);
+
+    fixture.detectChanges();
+    btn.click();
+
+    fixture.detectChanges();
+    let animationElem = getElement('.myDpViewChangeAnimation');
+    expect(animationElem).not.toBe(null);
+
+    fixture.detectChanges();
+    btn = getElement('.myDpYearBtn');
+    expect(btn).not.toBe(null);
+
+    fixture.detectChanges();
+    btn.click();
+
+    fixture.detectChanges();
+    animationElem = getElement('.myDpViewChangeAnimation');
+    expect(animationElem).not.toBe(null);
+
+    comp.closeCalendar();
+
+
+    opts.viewChangeAnimation = false;
+
+    comp.parseOptions(opts);
+    comp.openCalendar();
+
+    fixture.detectChanges();
+    animationElem = getElement('.myDpViewChangeAnimation');
+    expect(animationElem).toBe(null);
+
+    fixture.detectChanges();
+    btn = getElement('.myDpMonthBtn');
+    expect(btn).not.toBe(null);
+
+    fixture.detectChanges();
+    btn.click();
+
+    fixture.detectChanges();
+    animationElem = getElement('.myDpViewChangeAnimation');
+    expect(animationElem).toBe(null);
+
+    fixture.detectChanges();
+    btn = getElement('.myDpYearBtn');
+    expect(btn).not.toBe(null);
+
+    fixture.detectChanges();
+    btn.click();
+
+    fixture.detectChanges();
+    animationElem = getElement('.myDpViewChangeAnimation');
+    expect(animationElem).toBe(null);
+
+    comp.closeCalendar();
+  });
+
+  it('options - rtl', () => {
+    comp.setDefaultMonth('2020/02');
+
+    let opts: IMyOptions = {
+      dateRange: false,
+      dateFormat: 'dd.mm.yyyy',
+      rtl: true
+    };
+
+    comp.parseOptions(opts);
+    comp.openCalendar();
+
+    fixture.detectChanges();
+    let td = getElement('.d_0_0');
+    expect(td).not.toBe(null);
+    expect(td.textContent.trim()).toBe('2');
+
+    fixture.detectChanges();
+    td = getElement('.d_0_6');
+    expect(td).not.toBe(null);
+    expect(td.textContent.trim()).toBe('27');
+
+    fixture.detectChanges();
+    td = getElement('.d_5_0');
+    expect(td).not.toBe(null);
+    expect(td.textContent.trim()).toBe('8');
+
+    fixture.detectChanges();
+    td = getElement('.d_5_6');
+    expect(td).not.toBe(null);
+    expect(td.textContent.trim()).toBe('2');
+
+    fixture.detectChanges();
+    let prevBtn = getElement('.myDpPrevBtn .myDpHeaderBtn');
+    expect(prevBtn).not.toBe(null);
+    prevBtn.click();
+
+    fixture.detectChanges();
+    let monthBtn  = getElement('.myDpMonthBtn');
+    expect(monthBtn).not.toBe(null);
+    expect(monthBtn.textContent.trim()).toBe('Mar');
+    
+    fixture.detectChanges();
+    let nextBtn = getElement('.myDpNextBtn .myDpHeaderBtn');
+    expect(nextBtn).not.toBe(null);
+    nextBtn.click();
+
+    fixture.detectChanges();
+    monthBtn  = getElement('.myDpMonthBtn');
+    expect(monthBtn).not.toBe(null);
+    expect(monthBtn.textContent.trim()).toBe('Feb');
+
+    fixture.detectChanges();
+    monthBtn = getElement('.myDpMonthBtn');
+    expect(monthBtn).not.toBe(null);
+    monthBtn.click();
+
+    fixture.detectChanges();
+    td = getElement('.m_0_0 .myDpMonthValue');
+    expect(td).not.toBe(null);
+    expect(td.textContent.trim()).toBe('Mar');
+
+    fixture.detectChanges();
+    td = getElement('.m_0_2 .myDpMonthValue');
+    expect(td).not.toBe(null);
+    expect(td.textContent.trim()).toBe('Jan');
+
+    fixture.detectChanges();
+    td = getElement('.m_3_0 .myDpMonthValue');
+    expect(td).not.toBe(null);
+    expect(td.textContent.trim()).toBe('Dec');
+
+    fixture.detectChanges();
+    td = getElement('.m_3_2 .myDpMonthValue');
+    expect(td).not.toBe(null);
+    expect(td.textContent.trim()).toBe('Oct');
+
+    fixture.detectChanges();
+    prevBtn = getElement('.myDpPrevBtn .myDpHeaderBtn');
+    expect(prevBtn).not.toBe(null);
+    prevBtn.click();
+
+    fixture.detectChanges();
+    let yearBtn  = getElement('.myDpYearBtn');
+    expect(yearBtn).not.toBe(null);
+    expect(yearBtn.textContent.trim()).toBe('2021');
+    
+    fixture.detectChanges();
+    nextBtn = getElement('.myDpNextBtn .myDpHeaderBtn');
+    expect(nextBtn).not.toBe(null);
+    nextBtn.click();
+
+    fixture.detectChanges();
+    yearBtn  = getElement('.myDpYearBtn');
+    expect(yearBtn).not.toBe(null);
+    expect(yearBtn.textContent.trim()).toBe('2020');
+
+
+    fixture.detectChanges();
+    yearBtn.click();
+
+    fixture.detectChanges();
+    td = getElement('.y_0_0 .myDpYearValue');
+    expect(td).not.toBe(null);
+    expect(td.textContent.trim()).toBe('2012');
+
+    fixture.detectChanges();
+    td = getElement('.y_0_4 .myDpYearValue');
+    expect(td).not.toBe(null);
+    expect(td.textContent.trim()).toBe('2008');
+
+    fixture.detectChanges();
+    td = getElement('.y_4_0 .myDpYearValue');
+    expect(td).not.toBe(null);
+    expect(td.textContent.trim()).toBe('2032');
+
+    fixture.detectChanges();
+    td = getElement('.y_4_4 .myDpYearValue');
+    expect(td).not.toBe(null);
+    expect(td.textContent.trim()).toBe('2028');
+
+    
+
+    fixture.detectChanges();
+    prevBtn = getElement('.myDpPrevBtn .myDpHeaderBtn');
+    expect(prevBtn).not.toBe(null);
+    prevBtn.click();
+
+    fixture.detectChanges();
+    yearBtn  = getElement('.myDpYearBtn');
+    expect(yearBtn).not.toBe(null);
+    expect(yearBtn.textContent.trim()).toBe('2057 - 2033');
+    
+    fixture.detectChanges();
+    nextBtn = getElement('.myDpNextBtn .myDpHeaderBtn');
+    expect(nextBtn).not.toBe(null);
+    nextBtn.click();
+
+    fixture.detectChanges();
+    yearBtn  = getElement('.myDpYearBtn');
+    expect(yearBtn).not.toBe(null);
+    expect(yearBtn.textContent.trim()).toBe('2032 - 2008');
+
+    comp.closeCalendar();
   });
 
   it('options - stylesData', () => {

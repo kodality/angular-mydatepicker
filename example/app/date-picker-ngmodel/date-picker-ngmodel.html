@@ -165,10 +165,10 @@
                 </label>
             </td>
             <td>
-              <label>
-                <span>Override styles (change colors):</span>
-                <input style="cursor: pointer" type="checkbox" (change)="onOverrideStyles($event.currentTarget.checked)" [checked]="false">
-              </label>
+                <label>
+                <span>RTL:</span>
+                <input style="cursor: pointer" type="checkbox" (change)="onRtl($event.currentTarget.checked)" [checked]="false">
+            </label>
             </td>
         </tr>
 
@@ -183,6 +183,36 @@
           <label>
             <span>Disable since tomorrow:</span>
             <input style="cursor: pointer" type="checkbox" (change)="onDisableSinceTomorrow($event.currentTarget.checked)" [checked]="false">
+          </label>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <label>
+            <span>Show month number:</span>
+            <input style="cursor: pointer" type="checkbox" (change)="onShowMonthNumber($event.currentTarget.checked)" [checked]="true">
+          </label>
+        </td>
+        <td>
+            <label>
+                <span>Show footer bar:</span>
+                <input style="cursor: pointer" type="checkbox" (change)="onShowFooterBar($event.currentTarget.checked)" [checked]="false">
+              </label>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <label>
+            <span>Disable +-1 today (own style):</span>
+            <input style="cursor: pointer" type="checkbox" (change)="onDisableOwnStyle($event.currentTarget.checked)" [checked]="false">
+          </label>
+        </td>
+        <td>
+          <label>
+             <span>Mark day after tomorrow + 2 (own style):</span>
+             <input style="cursor: pointer" type="checkbox" (change)="onMarkOwnStyle($event.currentTarget.checked)" [checked]="false">
           </label>
         </td>
       </tr>
@@ -207,6 +237,28 @@
                 </select>
             </span>
           </label>
+        </td>
+      </tr>
+      <tr>
+        <td>
+            <label>
+                <span style="margin-right: 10px">Calendar animation:</span>
+                <span>
+                    <select style="padding: 2px;cursor: pointer;font-size: 11px;min-width: 60px;" (change)="onCalendarAnimation($event.target.value)">
+                        <option *ngFor="let a of calAnimations">{{a}}</option>
+                    </select>
+                </span>
+            </label>
+        </td>
+        <td>
+            <label>
+                <span style="margin-right: 10px">Override styles:</span>
+                <span>
+                    <select style="padding: 2px;cursor: pointer;font-size: 11px;min-width: 60px;" (change)="onOverrideCalColor($event.target.value)">
+                        <option *ngFor="let c of styleColor">{{c}}</option>
+                    </select>
+                </span>
+            </label>
         </td>
       </tr>
     </table>
@@ -240,12 +292,13 @@
                     </div>
                   -->
 
-                  <div class="input-group">
+                  <div class="input-group inputGroup">
                     <input class="form-control" placeholder="{{!myDatePickerOptions.dateRange ? 'Select a date' : 'Select a date range'}}" angular-mydatepicker name="mydate"
                            [(ngModel)]="model" [options]="myDatePickerOptions" [defaultMonth]="defMonth" [locale]="locale" #dp="angular-mydatepicker"
                            (dateChanged)="onDateChanged($event)" (calendarViewChanged)="onCalendarViewChanged($event)"
                            (calendarToggle)="onCalendarToggle($event)" (inputFieldChanged)="onInputFieldChanged($event)"
-                           (rangeDateSelection)="onRangeDateSelection($event)" [attr.disabled]="disabled?'':null" autocomplete="off"/>
+                           (rangeDateSelection)="onRangeDateSelection($event)" (viewActivated)="onViewActivated($event)" 
+                           [attr.disabled]="disabled?'':null" autocomplete="off"/>
                     <div class="input-group-append">
                       <button type="button" class="btn btn-secondary" (click)="dp.clearDate()">
                         <i class="fa fa-close"></i>

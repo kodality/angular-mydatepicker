@@ -1,7 +1,6 @@
 import {IMyDate} from "./my-date.interface";
 
-export interface IMyMarkedDates {
+export interface IMyDisabledDates {
   dates: Array<IMyDate>;
-  color?: string;
   styleClass?: string;
 }

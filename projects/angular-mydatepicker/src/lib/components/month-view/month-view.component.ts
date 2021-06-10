@@ -1,7 +1,8 @@
-import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewEncapsulation} from "@angular/core";
+import {Component, EventEmitter, Input, OnChanges, AfterViewInit, Output, SimpleChanges, ViewEncapsulation} from "@angular/core";
 import {IMyCalendarMonth} from "../../interfaces/my-calendar-month.interface";
 import {IMyOptions} from "../../interfaces/my-options.interface";
 import {KeyCode} from "../../enums/key-code.enum";
+import {ActiveView} from "../../enums/active-view.enum";
 import {UtilService} from "../../services/angular-mydatepicker.util.service";
 import {OPTS, MONTHS} from "../../constants/constants";
 
@@ -11,11 +12,14 @@ import {OPTS, MONTHS} from "../../constants/constants";
   providers: [UtilService],
   encapsulation: ViewEncapsulation.None
 })
-export class MonthViewComponent implements OnChanges {
+export class MonthViewComponent implements OnChanges, AfterViewInit {
   @Input() opts: IMyOptions;
   @Input() months: Array<Array<IMyCalendarMonth>>;
+  @Input() viewChanged: boolean;
+
   @Output() monthCellClicked: EventEmitter<IMyCalendarMonth> = new EventEmitter<IMyCalendarMonth>();
-  @Output() monthCellKeyDown: EventEmitter<KeyboardEvent> = new EventEmitter<KeyboardEvent>();
+  @Output() monthCellKeyDown: EventEmitter<any> = new EventEmitter<any>();
+  @Output() viewActivated: EventEmitter<ActiveView> = new EventEmitter<ActiveView>();
 
   constructor(private utilService: UtilService) { }
 
@@ -28,6 +32,10 @@ export class MonthViewComponent implements OnChanges {
     }
   }
 
+  ngAfterViewInit(): void {
+    this.viewActivated.emit(ActiveView.Month);
+  }
+
   onMonthCellClicked(event: any, cell: IMyCalendarMonth): void {
     event.stopPropagation();
 
@@ -38,7 +46,7 @@ export class MonthViewComponent implements OnChanges {
     this.monthCellClicked.emit(cell);
   }
 
-  onMonthCellKeyDown(event: KeyboardEvent, cell: IMyCalendarMonth) {
+  onMonthCellKeyDown(event: any, cell: IMyCalendarMonth) {
     const keyCode: number = this.utilService.getKeyCodeFromEvent(event);
     if (keyCode !== KeyCode.tab) {
       event.preventDefault();

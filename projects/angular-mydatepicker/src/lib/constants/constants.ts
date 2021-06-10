@@ -18,6 +18,8 @@ const YEAR_COL_COUNT = 4;
 
 const DOT = ".";
 const UNDER_LINE = "_";
+const PIPE = "|";
+const YEAR_SEPARATOR = " - ";
 
 const SU = "su";
 const MO = "mo";
@@ -31,6 +33,7 @@ const DEFAULT_LOCALE = "en";
 
 const ZERO_STR = "0";
 const EMPTY_STR = "";
+const SPACE_STR = " ";
 
 const CLICK = "click";
 const KEYUP = "keyup";
@@ -44,8 +47,10 @@ const LOCALE = "locale";
 const OBJECT = "object";
 const PX = "px";
 const STYLE = "style";
+const INNER_HTML = "innerHTML";
 
 const OPTS = "opts";
+const YEARS_DURATION = "yearsDuration";
 const YEARS = "years";
 const VISIBLE_MONTH = "visibleMonth";
 const SELECT_MONTH = "selectMonth";
@@ -57,6 +62,16 @@ const WEEK_DAYS = "weekDays";
 const SELECTED_DATE = "selectedDate";
 const SELECTED_DATE_RANGE = "selectedDateRange";
 const MONTHS = "months";
+
+const ANIMATION_END = "animationend";
+const ANIMATION_TIMEOUT = 550;
+const MY_DP_ANIMATION = "myDpAnimation";
+const ANIMATION_NAMES = ["Fade", "ScaleTop", "ScaleCenter", "Rotate", "FlipDiagonal", "Own"];
+const IN = "In";
+const OUT = "Out";
+
+const TABINDEX = "tabindex";
+const TD_SELECTOR = "table tbody tr td:not(.myDpDaycellWeekNbr)";
 
 const PREVENT_CLOSE_TIMEOUT = 50;
 
@@ -76,6 +91,8 @@ export {
   YEAR_COL_COUNT,
   DOT,
   UNDER_LINE,
+  PIPE,
+  YEAR_SEPARATOR,
   SU,
   MO,
   TU,
@@ -86,6 +103,7 @@ export {
   DEFAULT_LOCALE,
   ZERO_STR,
   EMPTY_STR,
+  SPACE_STR,
   CLICK,
   KEYUP,
   BLUR,
@@ -98,7 +116,9 @@ export {
   OBJECT,
   PX,
   STYLE,
+  INNER_HTML,
   OPTS,
+  YEARS_DURATION,
   YEARS,
   VISIBLE_MONTH,
   SELECT_MONTH,
@@ -110,5 +130,13 @@ export {
   SELECTED_DATE,
   SELECTED_DATE_RANGE,
   MONTHS,
+  ANIMATION_END,
+  ANIMATION_TIMEOUT,
+  MY_DP_ANIMATION,
+  ANIMATION_NAMES,
+  IN,
+  OUT,
+  TABINDEX,
+  TD_SELECTOR,
   PREVENT_CLOSE_TIMEOUT
 };

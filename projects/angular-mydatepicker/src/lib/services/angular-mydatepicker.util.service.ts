@@ -6,30 +6,73 @@ import {IMyDate} from "../interfaces/my-date.interface";
 import {IMyDateRange} from "../interfaces/my-date-range.interface";
 import {IMyMonth} from "../interfaces/my-month.interface";
 import {IMyMonthLabels} from "../interfaces/my-month-labels.interface";
-import {IMyMarkedDates} from "../interfaces/my-marked-dates.interface";
 import {IMyMarkedDate} from "../interfaces/my-marked-date.interface";
+import {IMyDisabledDate} from "../interfaces/my-disabled-date.interface";
 import {IMyDateFormat} from "../interfaces/my-date-format.interface";
+import {IMyValidateOptions} from "../interfaces/my-validate-options.interface";
 import {IMyOptions} from "../interfaces/my-options.interface";
 import {KeyCode} from "../enums/key-code.enum";
 import {KeyName} from "../enums/key-name.enum";
-import {D, DD, M, MM, MMM, YYYY, SU, MO, TU, WE, TH, FR, SA, ZERO_STR, EMPTY_STR} from "../constants/constants";
+import {D, DD, M, MM, MMM, YYYY, SU, MO, TU, WE, TH, FR, SA, ZERO_STR, EMPTY_STR, PIPE} from "../constants/constants";
 
 @Injectable()
 export class UtilService {
   weekDays: Array<string> = [SU, MO, TU, WE, TH, FR, SA];
 
-  isDateValid(dateStr: string, options: IMyOptions): IMyDate {
+  isDateValid(dateStr: string, options: IMyOptions, validateOpts: IMyValidateOptions): IMyDate {
     const {dateFormat, minYear, maxYear, monthLabels} = options;
 
     const returnDate: IMyDate = this.resetDate();
-    const daysInMonth: Array<number> = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    const datesInMonth: Array<number> = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
     const isMonthStr: boolean = dateFormat.indexOf(MMM) !== -1;
     const delimeters: Array<string> = dateFormat.match(/[^(dmy)]{1,}/g);
 
-    const dateValue: Array<IMyDateFormat> = this.getDateValue(dateStr, dateFormat, delimeters);
-    const year: number = this.getNumberByValue(dateValue[0]);
-    const month: number = isMonthStr ? this.getMonthNumberByMonthName(dateValue[1], monthLabels) : this.getNumberByValue(dateValue[1]);
-    const day: number = this.getNumberByValue(dateValue[2]);
+    if (!dateStr || dateStr === EMPTY_STR) {
+      return returnDate;
+    }
+
+    const dateValues: Array<IMyDateFormat> = this.getDateValue(dateStr, dateFormat, delimeters);
+
+    let year: number = 0;
+    let month: number = 0;
+    let day: number = 0;
+
+    for(const dv of dateValues) {
+      const {value, format} = dv;
+
+      if (value && /^\d+$/.test(value) && Number(value) === 0) {
+        return returnDate;
+      }
+      
+      if (format.indexOf(YYYY) !== -1) {
+        year = this.getNumberByValue(dv);
+      }
+      else if (format.indexOf(M) !== -1) {
+        month = isMonthStr ? this.getMonthNumberByMonthName(dv, monthLabels) : this.getNumberByValue(dv);
+      }
+      else if (format.indexOf(D) !== -1) {
+        day = this.getNumberByValue(dv);
+      }
+    }
+
+    const {validateDisabledDates, selectedValue} = validateOpts;
+
+    year = year === 0 && selectedValue ? selectedValue.year : year;
+    month = month === 0 && selectedValue ? selectedValue.month : month;
+    day = day === 0 && selectedValue ? selectedValue.day : day;
+
+    const today: IMyDate = this.getToday();
+    if (year === 0 && (month !== 0 || day !== 0)) {
+      year = today.year;
+    }
+
+    if (month === 0 && (year !== 0 || day !== 0)) {
+      month = today.month;
+    }
+
+    if (day === 0 && (year !== 0 || month !== 0)) {
+      day = today.day;
+    }
 
     if (month !== -1 && day !== -1 && year !== -1) {
       if (year < minYear || year > maxYear || month < 1 || month > 12) {
@@ -38,15 +81,15 @@ export class UtilService {
 
       const date: IMyDate = {year, month, day};
 
-      if (this.isDisabledDate(date, options)) {
+      if (validateDisabledDates && this.isDisabledDate(date, options).disabled) {
         return returnDate;
       }
 
       if (year % 400 === 0 || (year % 100 !== 0 && year % 4 === 0)) {
-        daysInMonth[1] = 29;
+        datesInMonth[1] = 29;
       }
 
-      if (day < 1 || day > daysInMonth[month - 1]) {
+      if (day < 1 || day > datesInMonth[month - 1]) {
         return returnDate;
       }
 
@@ -56,16 +99,26 @@ export class UtilService {
     return returnDate;
   }
 
-  isDateValidDateRange(dateRangeStr: string, options: IMyOptions): IMyDateRange {
+  isDateValidDateRange(dateRangeStr: string, options: IMyOptions, validateOpts: IMyValidateOptions): IMyDateRange {
     let dateRange: IMyDateRange = {begin: this.resetDate(), end: this.resetDate()};
     if (dateRangeStr && dateRangeStr.length) {
       const dates: Array<string> = dateRangeStr.split(options.dateRangeDatesDelimiter);
       if (dates && dates.length === 2) {
         const [beginDate, endDate] = dates;
-        const begin: IMyDate = this.isDateValid(beginDate, options);
+        let {selectedValue} = validateOpts;
+
+        if (selectedValue) {
+          validateOpts.selectedValue = selectedValue.begin;
+        }
+        
+        const begin: IMyDate = this.isDateValid(beginDate, options, validateOpts);
 
         if (this.isInitializedDate(begin)) {
-          const end: IMyDate = this.isDateValid(endDate, options);
+          if (selectedValue) {
+            validateOpts.selectedValue = selectedValue.end;
+          }
+          
+          const end: IMyDate = this.isDateValid(endDate, options, validateOpts);
 
           if (this.isInitializedDate(end) && this.isDateSameOrEarlier(begin, end)) {
             dateRange = {begin, end};
@@ -77,9 +130,14 @@ export class UtilService {
   }
 
   getDateValue(dateStr: string, dateFormat: string, delimeters: Array<string>): Array<IMyDateFormat> {
-    let del: string = delimeters[0];
-    if (delimeters[0] !== delimeters[1]) {
-      del = delimeters[0] + delimeters[1];
+    let del: string = EMPTY_STR;
+    
+    if (delimeters) {
+      for(const d of delimeters) {
+        if (del.indexOf(d) === -1) {
+          del += d;
+        }
+      }
     }
 
     const re: any = new RegExp("[" + del + "]");
@@ -89,13 +147,13 @@ export class UtilService {
 
     for (let i = 0; i < df.length; i++) {
       if (df[i].indexOf(YYYY) !== -1) {
-        da[0] = {value: ds[i], format: df[i]};
+        da.push({value: ds[i], format: df[i]});
       }
       if (df[i].indexOf(M) !== -1) {
-        da[1] = {value: ds[i], format: df[i]};
+        da.push({value: ds[i], format: df[i]});
       }
       if (df[i].indexOf(D) !== -1) {
-        da[2] = {value: ds[i], format: df[i]};
+        da.push({value: ds[i], format: df[i]});
       }
     }
     return da;
@@ -137,32 +195,47 @@ export class UtilService {
     return month;
   }
 
-  isDisabledDate(date: IMyDate, options: IMyOptions): boolean {
+  isDisabledDate(date: IMyDate, options: IMyOptions): IMyDisabledDate {
     const {minYear, maxYear, disableUntil, disableSince, disableWeekends, disableDates, disableDateRanges, disableWeekdays, enableDates} = options;
 
-    for (const d of enableDates) {
-      if ((d.year === 0 || d.year === date.year) && (d.month === 0 || d.month === date.month) && d.day === date.day) {
-        return false;
-      }
+    if (this.dateMatchToDates(date, enableDates)) {
+      return this.getDisabledValue(false, EMPTY_STR);
     }
 
     if (date.year < minYear && date.month === 12 || date.year > maxYear && date.month === 1) {
-      return true;
+      return this.getDisabledValue(true, EMPTY_STR);
     }
 
-    const dateMs: number = this.getTimeInMilliseconds(date);
-    if (this.isInitializedDate(disableUntil) && dateMs <= this.getTimeInMilliseconds(disableUntil)) {
-      return true;
+    const inputDates: any = disableDates as any;
+    const result = inputDates.find((d) => {
+      return d.dates;
+    });
+
+    if (!result) {
+      if (this.dateMatchToDates(date, inputDates)) {
+        return this.getDisabledValue(true, EMPTY_STR);
+      }
+    }
+    else {
+      for (const dd of inputDates) {
+        if (this.dateMatchToDates(date, dd.dates)) {
+          return this.getDisabledValue(true, dd.styleClass);
+        }
+      }
     }
 
-    if (this.isInitializedDate(disableSince) && dateMs >= this.getTimeInMilliseconds(disableSince)) {
-      return true;
+    if (this.isDisabledByDisableUntil(date, disableUntil)) {
+      return this.getDisabledValue(true, EMPTY_STR);
+    }
+
+    if (this.isDisabledByDisableSince(date, disableSince)) {
+      return this.getDisabledValue(true, EMPTY_STR);
     }
 
     if (disableWeekends) {
       const dayNbr = this.getDayNumber(date);
       if (dayNbr === 0 || dayNbr === 6) {
-        return true;
+        return this.getDisabledValue(true, EMPTY_STR);
       }
     }
 
@@ -170,52 +243,167 @@ export class UtilService {
     if (disableWeekdays.length > 0) {
       for (const wd of disableWeekdays) {
         if (dn === this.getWeekdayIndex(wd)) {
-          return true;
+          return this.getDisabledValue(true, EMPTY_STR);
         }
       }
     }
 
-    for (const d of disableDates) {
-      if ((d.year === 0 || d.year === date.year) && (d.month === 0 || d.month === date.month) && d.day === date.day) {
-        return true;
-      }
+    if (this.isDisabledByDisableDateRange(date, date, disableDateRanges)) {
+      return this.getDisabledValue(true, EMPTY_STR);
     }
 
-    for (const d of disableDateRanges) {
-      if (this.isInitializedDate(d.begin) && this.isInitializedDate(d.end) && dateMs >= this.getTimeInMilliseconds(d.begin) && dateMs <= this.getTimeInMilliseconds(d.end)) {
+    return this.getDisabledValue(false, EMPTY_STR);
+  }
+
+  getDisabledValue(disabled: boolean, styleClass: string): IMyDisabledDate {
+    return {disabled, styleClass};
+  }
+
+  dateMatchToDates(date: IMyDate, dates: Array<IMyDate>): boolean {
+    for (const d of dates) {
+      if ((d.year === 0 || d.year === date.year) && (d.month === 0 || d.month === date.month) && d.day === date.day) {
         return true;
       }
     }
     return false;
   }
 
-  isMarkedDate(date: IMyDate, markedDates: Array<IMyMarkedDates>, markWeekends: IMyMarkedDate): IMyMarkedDate {
-    for (const md of markedDates) {
-      for (const d of md.dates) {
-        if ((d.year === 0 || d.year === date.year) && (d.month === 0 || d.month === date.month) && d.day === date.day) {
-          return {marked: true, color: md.color};
+  isDisabledMonth(year: number, month: number, options: IMyOptions): boolean {
+    const {disableUntil, disableSince, disableDateRanges, enableDates} = options;
+
+    const dateEnd: IMyDate = {year, month, day: this.datesInMonth(month, year)};
+    const dateBegin: IMyDate = {year, month, day: 1};
+
+    if (this.isDatesEnabled(dateBegin, dateEnd, enableDates)) {
+      return false;
+    }
+
+    if (this.isDisabledByDisableUntil(dateEnd, disableUntil)) {
+      return true;
+    }
+
+    if (this.isDisabledByDisableSince(dateBegin, disableSince)) {
+      return true;
+    }
+
+    if (this.isDisabledByDisableDateRange(dateBegin, dateEnd, disableDateRanges)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  isDisabledYear(year: number, options: IMyOptions): boolean {
+    const {disableUntil, disableSince, disableDateRanges, enableDates, minYear, maxYear} = options;
+
+    const dateEnd: IMyDate = {year, month: 12, day: 31};
+    const dateBegin: IMyDate = {year, month: 1, day: 1};
+
+    if (this.isDatesEnabled(dateBegin, dateEnd, enableDates)) {
+      return false;
+    }
+
+    if (this.isDisabledByDisableUntil(dateEnd, disableUntil)) {
+      return true;
+    }
+
+    if (this.isDisabledByDisableSince(dateBegin, disableSince)) {
+      return true;
+    }
+
+    if (this.isDisabledByDisableDateRange(dateBegin, dateEnd, disableDateRanges)) {
+      return true;
+    }
+
+    if (year < minYear || year > maxYear) {
+      return true;
+    }
+
+    return false;
+  }
+
+  isDisabledByDisableUntil(date: IMyDate, disableUntil: IMyDate): boolean {
+    return this.isInitializedDate(disableUntil) && this.getTimeInMilliseconds(date) <= this.getTimeInMilliseconds(disableUntil);
+  }
+
+  isDisabledByDisableSince(date: IMyDate, disableSince: IMyDate): boolean {
+    return this.isInitializedDate(disableSince) && this.getTimeInMilliseconds(date) >= this.getTimeInMilliseconds(disableSince);
+  }
+
+  isPastDatesEnabled(date: IMyDate, enableDates: Array<IMyDate>): boolean {
+    for(const d of enableDates) {
+      if (this.getTimeInMilliseconds(d) <= this.getTimeInMilliseconds(date)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  isFutureDatesEnabled(date: IMyDate, enableDates: Array<IMyDate>): boolean {
+    for(const d of enableDates) {
+      if (this.getTimeInMilliseconds(d) >= this.getTimeInMilliseconds(date)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  isDatesEnabled(dateBegin: IMyDate, dateEnd: IMyDate, enableDates: Array<IMyDate>): boolean {
+    for(const d of enableDates) {
+      if (this.getTimeInMilliseconds(d) >= this.getTimeInMilliseconds(dateBegin) 
+        && this.getTimeInMilliseconds(d) <= this.getTimeInMilliseconds(dateEnd)) {
+          return true;
         }
+    }
+    return false;
+  }
+
+  isDisabledByDisableDateRange(dateBegin: IMyDate, dateEnd: IMyDate, disableDateRanges: Array<IMyDateRange>): boolean {
+    const dateMsBegin: number = this.getTimeInMilliseconds(dateBegin);
+    const dateMsEnd: number = this.getTimeInMilliseconds(dateEnd);
+
+    for (const d of disableDateRanges) {
+      if (this.isInitializedDate(d.begin) && this.isInitializedDate(d.end) 
+        && dateMsBegin >= this.getTimeInMilliseconds(d.begin) && dateMsEnd <= this.getTimeInMilliseconds(d.end)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  isMarkedDate(date: IMyDate, options: IMyOptions): IMyMarkedDate {
+    const {markDates, markWeekends} = options;
+
+    for (const md of markDates) {
+      if (this.dateMatchToDates(date, md.dates)) {
+        return this.getMarkedValue(true, md.color, md.styleClass);
       }
     }
     if (markWeekends && markWeekends.marked) {
       const dayNbr = this.getDayNumber(date);
       if (dayNbr === 0 || dayNbr === 6) {
-        return {marked: true, color: markWeekends.color};
+        return this.getMarkedValue(true, markWeekends.color, EMPTY_STR);
       }
     }
-    return {marked: false, color: EMPTY_STR};
+    return this.getMarkedValue(false, EMPTY_STR, EMPTY_STR);
   }
 
-  isHighlightedDate(date: IMyDate, sunHighlight: boolean, satHighlight: boolean, highlightDates: Array<IMyDate>): boolean {
+  getMarkedValue(marked: boolean, color: string, styleClass: string): IMyMarkedDate {
+    return {marked, color: color ? color : EMPTY_STR, styleClass: styleClass ? styleClass : EMPTY_STR};
+  }
+
+  isHighlightedDate(date: IMyDate, options: IMyOptions): boolean {
+    const {sunHighlight, satHighlight, highlightDates} = options;
+
     const dayNbr: number = this.getDayNumber(date);
     if (sunHighlight && dayNbr === 0 || satHighlight && dayNbr === 6) {
       return true;
     }
-    for (const d of highlightDates) {
-      if ((d.year === 0 || d.year === date.year) && (d.month === 0 || d.month === date.month) && d.day === date.day) {
-        return true;
-      }
+
+    if (this.dateMatchToDates(date, highlightDates)) {
+      return true;
     }
+
     return false;
   }
 
@@ -225,14 +413,6 @@ export class UtilService {
     return Math.round(((d.getTime() - new Date(d.getFullYear(), 0, 4).getTime()) / 86400000) / 7) + 1;
   }
 
-  isMonthDisabledByDisableUntil(date: IMyDate, disableUntil: IMyDate): boolean {
-    return this.isInitializedDate(disableUntil) && this.getTimeInMilliseconds(date) <= this.getTimeInMilliseconds(disableUntil);
-  }
-
-  isMonthDisabledByDisableSince(date: IMyDate, disableSince: IMyDate): boolean {
-    return this.isInitializedDate(disableSince) && this.getTimeInMilliseconds(date) >= this.getTimeInMilliseconds(disableSince);
-  }
-
   getDateModel(date: IMyDate, dateRange: IMyDateRange, dateFormat: string, monthLabels: IMyMonthLabels, rangeDelimiter: string, dateStr: string = EMPTY_STR): IMyDateModel {
     let singleDateModel: IMySingleDateModel = null;
     let dateRangeModel: IMyDateRangeModel = null;
@@ -240,7 +420,7 @@ export class UtilService {
     if (date) {
       singleDateModel = {
         date,
-        jsDate: this.getDate(date),
+        jsDate: this.myDateToJsDate(date),
         formatted: dateStr.length ? dateStr : this.formatDate(date, dateFormat, monthLabels),
         epoc: this.getEpocTime(date)
       };
@@ -248,10 +428,10 @@ export class UtilService {
     else {
       dateRangeModel = {
         beginDate: dateRange.begin,
-        beginJsDate: this.getDate(dateRange.begin),
+        beginJsDate: this.myDateToJsDate(dateRange.begin),
         beginEpoc: this.getEpocTime(dateRange.begin),
         endDate: dateRange.end,
-        endJsDate: this.getDate(dateRange.end),
+        endJsDate: this.myDateToJsDate(dateRange.end),
         endEpoc: this.getEpocTime(dateRange.end),
         formatted: this.formatDate(dateRange.begin, dateFormat, monthLabels) + rangeDelimiter + this.formatDate(dateRange.end, dateFormat, monthLabels)
       };
@@ -315,6 +495,16 @@ export class UtilService {
     return this.getTimeInMilliseconds(dateRange.begin) === dateMs || this.getTimeInMilliseconds(dateRange.end) === dateMs;
   }
 
+  isDateRangeBegin(dateRange: IMyDateRange, date: IMyDate): boolean {
+    const dateMs: number = this.getTimeInMilliseconds(date);
+    return this.getTimeInMilliseconds(dateRange.begin) === dateMs;
+  }
+
+  isDateRangeEnd(dateRange: IMyDateRange, date: IMyDate): boolean {
+    const dateMs: number = this.getTimeInMilliseconds(date);
+    return this.getTimeInMilliseconds(dateRange.end) === dateMs;
+  }
+
   isDateInRange(date: IMyDate, dateRange: IMyDateRange): boolean {
     if (!this.isInitializedDate(dateRange.begin) || !this.isInitializedDate(dateRange.end)) {
       return false;
@@ -327,11 +517,12 @@ export class UtilService {
   }
 
   getTimeInMilliseconds(date: IMyDate): number {
-    return this.getDate(date).getTime();
+    return this.myDateToJsDate(date).getTime();
   }
 
-  getDate(date: IMyDate): Date {
-    return new Date(date.year, date.month - 1, date.day, 0, 0, 0, 0);
+  getToday(): IMyDate {
+    const date: Date = new Date();
+    return {year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate()};
   }
 
   getDayNumber(date: IMyDate): number {
@@ -346,38 +537,80 @@ export class UtilService {
     return Math.round(this.getTimeInMilliseconds(date) / 1000.0);
   }
 
-  getKeyCodeFromEvent(event: any): number {
-    const key: any = event.key || event.keyCode;
+  jsDateToMyDate(date: Date): IMyDate {
+    return {year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate()};
+  }
 
-    if (key === KeyName.enter || key === KeyCode.enter) {
+  myDateToJsDate(date: IMyDate): Date {
+    const {year, month, day} = date;
+    return new Date(year, month - 1, day, 0, 0, 0, 0);
+  }
+
+  datesInMonth(m: number, y: number): number {
+    return new Date(y, m, 0).getDate();
+  }
+
+  datesInPrevMonth(m: number, y: number): number {
+    const d: Date = this.getJsDate(y, m, 1);
+    d.setMonth(d.getMonth() - 1);
+    return this.datesInMonth(d.getMonth() + 1, d.getFullYear());
+  }
+
+  getJsDate(year: number, month: number, day: number): Date {
+    return new Date(year, month - 1, day, 0, 0, 0, 0);
+  }
+
+  getSelectedValue(selectedValue: any, dateRange: boolean): any {
+    if (!selectedValue) {
+      return null;
+    }
+
+    if (!dateRange) {
+      return selectedValue.date;
+    }
+    else {
+      const {beginDate, endDate} = selectedValue;
+      return {begin: beginDate, end: endDate};
+    }
+  }
+
+  getKeyCodeFromEvent(event: any): number {
+    let key: any = event.key || event.keyCode || event.which;
+
+    if (this.checkKeyName(key, KeyName.enter) || key === KeyCode.enter) {
       return KeyCode.enter;
     }
-    else if (key === KeyName.esc || key === KeyCode.esc) {
+    else if (this.checkKeyName(key, KeyName.esc) || key === KeyCode.esc) {
       return KeyCode.esc;
     }
-    else if (key === KeyName.space || key === KeyCode.space) {
+    else if (this.checkKeyName(key, KeyName.space) || key === KeyCode.space) {
       return KeyCode.space;
     }
-    else if (key === KeyName.leftArrow || key === KeyCode.leftArrow) {
+    else if (this.checkKeyName(key, KeyName.leftArrow) || key === KeyCode.leftArrow) {
       return KeyCode.leftArrow;
     }
-    else if (key === KeyName.upArrow || key === KeyCode.upArrow) {
+    else if (this.checkKeyName(key, KeyName.upArrow) || key === KeyCode.upArrow) {
       return KeyCode.upArrow;
     }
-    else if (key === KeyName.rightArrow || key === KeyCode.rightArrow) {
+    else if (this.checkKeyName(key, KeyName.rightArrow) || key === KeyCode.rightArrow) {
       return KeyCode.rightArrow;
     }
-    else if (key === KeyName.downArrow || key === KeyCode.downArrow) {
+    else if (this.checkKeyName(key, KeyName.downArrow)|| key === KeyCode.downArrow) {
       return KeyCode.downArrow;
     }
-    else if (key === KeyName.tab || key === KeyCode.tab) {
+    else if (this.checkKeyName(key, KeyName.tab) || key === KeyCode.tab) {
       return KeyCode.tab;
     }
-    else if (key === KeyName.shift || key === KeyCode.shift) {
+    else if (this.checkKeyName(key, KeyName.shift) || key === KeyCode.shift) {
       return KeyCode.shift;
     }
     else {
       return null;
     }
+  }
+
+  checkKeyName(key: string, keyName: string): boolean {
+    const arr: Array<string> = keyName.split(PIPE);
+    return arr.indexOf(key) !== -1;
   }
 }

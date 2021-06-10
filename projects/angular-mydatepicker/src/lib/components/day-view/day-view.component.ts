@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnChanges, Output, ViewEncapsulation, SimpleChanges} from "@angular/core";
+import {Component, EventEmitter, Input, OnChanges, AfterViewInit, Output, ViewEncapsulation, SimpleChanges} from "@angular/core";
 import {IMyCalendarDay} from "../../interfaces/my-calendar-day.interface";
 import {IMyDate} from "../../interfaces/my-date.interface";
 import {IMyDateRange} from "../../interfaces/my-date-range.interface";
@@ -7,6 +7,7 @@ import {IMyWeek} from "../../interfaces/my-week.interface";
 import {UtilService} from "../../services/angular-mydatepicker.util.service";
 import {KeyCode} from "../../enums/key-code.enum";
 import {MonthId} from "../../enums/month-id.enum";
+import {ActiveView} from "../../enums/active-view.enum";
 import {OPTS, DATES, WEEK_DAYS, SELECTED_DATE, SELECTED_DATE_RANGE} from "../../constants/constants";
 
 @Component({
@@ -15,15 +16,17 @@ import {OPTS, DATES, WEEK_DAYS, SELECTED_DATE, SELECTED_DATE_RANGE} from "../../
   providers: [UtilService],
   encapsulation: ViewEncapsulation.None
 })
-export class DayViewComponent implements OnChanges {
+export class DayViewComponent implements OnChanges, AfterViewInit {
   @Input() opts: IMyOptions;
   @Input() dates: Array<IMyWeek>;
   @Input() weekDays: Array<string>;
   @Input() selectedDate: IMyDate;
   @Input() selectedDateRange: IMyDateRange;
+  @Input() viewChanged: boolean;
 
   @Output() dayCellClicked: EventEmitter<IMyCalendarDay> = new EventEmitter<IMyCalendarDay>();
-  @Output() dayCellKeyDown: EventEmitter<KeyboardEvent> = new EventEmitter<KeyboardEvent>();
+  @Output() dayCellKeyDown: EventEmitter<any> = new EventEmitter<any>();
+  @Output() viewActivated: EventEmitter<ActiveView> = new EventEmitter<ActiveView>();
 
   prevMonthId: number = MonthId.prev;
   currMonthId: number = MonthId.curr;
@@ -49,17 +52,21 @@ export class DayViewComponent implements OnChanges {
     }
   }
 
+  ngAfterViewInit(): void {
+    this.viewActivated.emit(ActiveView.Date);
+  }
+
   onDayCellClicked(event: any, cell: IMyCalendarDay): void {
     event.stopPropagation();
 
-    if (cell.disabled) {
+    if (cell.disabledDate.disabled) {
       return;
     }
 
     this.dayCellClicked.emit(cell);
   }
 
-  onDayCellKeyDown(event: KeyboardEvent, cell: IMyCalendarDay) {
+  onDayCellKeyDown(event: any, cell: IMyCalendarDay) {
     const keyCode: number = this.utilService.getKeyCodeFromEvent(event);
     if (keyCode !== KeyCode.tab) {
       event.preventDefault();
@@ -101,5 +108,13 @@ export class DayViewComponent implements OnChanges {
 
   isDateRangeBeginOrEndSame(date: IMyDate): boolean {
     return this.utilService.isDateRangeBeginOrEndSame(this.selectedDateRange, date);
+  }
+
+  isDateRangeBegin(date: IMyDate): boolean {
+    return this.utilService.isDateRangeBegin(this.selectedDateRange, date);
+  }
+
+  isDateRangeEnd(date: IMyDate): boolean {
+    return this.utilService.isDateRangeEnd(this.selectedDateRange, date);
   }
 }

@@ -13,7 +13,7 @@ export {UtilService} from "./lib/services/angular-mydatepicker.util.service";
 export {DefaultConfigService} from "./lib/services/angular-mydatepicker.config.service";
 export {LocaleService} from "./lib/services/angular-mydatepicker.locale.service";
 
-export {AngularMyDatePickerFocusDirective} from "./lib/directives/angular-mydatepicker-focus.directive";
+export {AngularMyDatePickerCalendarDirective} from "./lib/directives/angular-mydatepicker-calendar.directive";
 
 export {IMyCalendarDay} from "./lib/interfaces/my-calendar-day.interface";
 export {IMyCalendarMonth} from "./lib/interfaces/my-calendar-month.interface";
@@ -28,6 +28,8 @@ export {IMyDayLabels} from "./lib/interfaces/my-day-labels.interface";
 export {IMyDefaultMonth} from "./lib/interfaces/my-default-month.interface";
 export {IMyInputFieldChanged} from "./lib/interfaces/my-input-field-changed.interface";
 export {IMyLocales} from "./lib/interfaces/my-locale.interface";
+export {IMyDisabledDate} from "./lib/interfaces/my-disabled-date.interface";
+export {IMyDisabledDates} from "./lib/interfaces/my-disabled-dates.interface";
 export {IMyMarkedDate} from "./lib/interfaces/my-marked-date.interface";
 export {IMyMarkedDates} from "./lib/interfaces/my-marked-dates.interface";
 export {IMyMonth} from "./lib/interfaces/my-month.interface";
@@ -39,6 +41,8 @@ export {IMySingleDateModel} from "./lib/interfaces/my-single-date-model.interfac
 export {IMyWeek} from "./lib/interfaces/my-week.interface";
 export {IMyWeekday} from "./lib/interfaces/my-weekday.interface";
 export {IMyStyles} from "./lib/interfaces/my-styles.interface";
+export {IMyDivHostElement} from "./lib/interfaces/my-div-host-element.interface";
+export {IMyCalendarAnimation} from "./lib/interfaces/my-calendar-animation.interface";
 
 export {CalToggle} from "./lib/enums/cal-toggle.enum";
 export {KeyCode} from "./lib/enums/key-code.enum";
@@ -46,5 +50,8 @@ export {KeyName} from "./lib/enums/key-name.enum";
 export {MonthId} from "./lib/enums/month-id.enum";
 export {Year} from "./lib/enums/year.enum";
 export {DefaultView} from "./lib/enums/default-view.enum";
+export {ActiveView} from "./lib/enums/active-view.enum";
+export {CalAnimation} from "./lib/enums/cal-animation.enum";
+export {HeaderAction} from "./lib/enums/header-action.enum";
 
 export * from "./lib/constants/constants";
